@@ -1,5 +1,5 @@
 const axios = require("axios");
-
+const spotifyAuth = require("../utils/spotifyAuth");
 module.exports = {
     async searchTemp(req) {
         try {
@@ -7,12 +7,21 @@ module.exports = {
 
             city_name[0].toUpperCase();
 
-            let tempResponse = await axios.get(
-                `http://api.openweathermap.org/data/2.5/weather?q=${city_name}&appid=b77e07f479efe92156376a8b07640ced&units=metric`
-            );
-            let temperature = tempResponse.data.main.temp;
+            let axiosTemperature = axios.create({
+                baseURL: "http://api.openweathermap.org/data/2.5/weather?q=" +
+                    city_name +
+                    "&appid=b77e07f479efe92156376a8b07640ced&units=metric",
+                timeout: 5000,
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
 
-            return searchPlaylist(temperature);
+            let tempResponse = await axiosTemperature.get().catch(err => {});
+            let temperature = tempResponse.data.main.temp;
+            let token = await spotifyAuth.auth();
+
+            searchPlaylist(temperature, token);
 
             //return res.json(playlist);
         } catch (error) {
@@ -21,24 +30,28 @@ module.exports = {
     }
 };
 
-async function searchPlaylist(temp, res) {
-    if (temp > 30.0) return console.log("Party Tracks");
-    else if (temp >= 15.0) return console.log("Pop");
-    else if (temp >= 10.0) return console.log("Rock");
-    else return console.log("Classical");
+async function searchPlaylist(temp, token, res) {
+    let playlist_id = "";
 
-    /*
-                    const axiosInstance = axios.create({
-                        baseURL: "https://api.spotify.com/v1/playlists/4oq9wx7oNEasiqNMxTB29G/tracks",
-                        timeout: 5000,
-                        headers: {
-                            Authorization: "Bearer 08c1a6be652e4fdca07f1815bfd167e4",
-                            "Content-Type": "application/json"
-                        }
-                    });
+    if (temp > 30.0) {
+        playlist_id = "4UvlO8zrSfNhncnU3WQBgj";
+    } else if (temp >= 15.0) {
+        playlist_id = "37i9dQZF1DX6aTaZa0K6VA";
+    } else if (temp >= 10.0) {
+        playlist_id = "37i9dQZF1DWXRqgorJj26U";
+    } else {
+        playlist_id = "37i9dQZF1DWWEJlAGA9gs0";
+    }
 
-                    let data = await axiosInstance.get().catch(err => {});
-                    console.log(data);
-                    return res.json(data);
-                    https://api.spotify.com/v1/playlists/{playlist_id}*/
+    let axiosPlaylist = axios.create({
+        baseURL: "https://api.spotify.com/v1/playlists/" + playlist_id + "/tracks",
+        timeout: 5000,
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token
+        }
+    });
+    let data = await axiosPlaylist.get().catch(err => {});
+    console.log(data);
+    return res.json(data);
 }
