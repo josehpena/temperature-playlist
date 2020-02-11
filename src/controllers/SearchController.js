@@ -1,7 +1,9 @@
 const axios = require("axios");
 const spotifyAuth = require("../utils/spotifyAuth");
+const searchPlaylistID = require("../utils/searchPlaylistID");
+
 module.exports = {
-    async searchTemp(req) {
+    async searchTemp(req, res) {
         try {
             const { city_name } = req.body;
 
@@ -19,39 +21,12 @@ module.exports = {
 
             let tempResponse = await axiosTemperature.get().catch(err => {});
             let temperature = tempResponse.data.main.temp;
-            let token = await spotifyAuth.auth();
+            let playlist_id = searchPlaylistID(temperature);
 
-            searchPlaylist(temperature, token);
-
-            //return res.json(playlist);
+            let playlist = await spotifyAuth.getPlaylist(playlist_id);
+            res.send("Playlist is on console!");
         } catch (error) {
             console.log(error);
         }
     }
 };
-
-async function searchPlaylist(temp, token, res) {
-    let playlist_id = "";
-
-    if (temp > 30.0) {
-        playlist_id = "4UvlO8zrSfNhncnU3WQBgj";
-    } else if (temp >= 15.0) {
-        playlist_id = "37i9dQZF1DX6aTaZa0K6VA";
-    } else if (temp >= 10.0) {
-        playlist_id = "37i9dQZF1DWXRqgorJj26U";
-    } else {
-        playlist_id = "37i9dQZF1DWWEJlAGA9gs0";
-    }
-
-    let axiosPlaylist = axios.create({
-        baseURL: "https://api.spotify.com/v1/playlists/" + playlist_id + "/tracks",
-        timeout: 5000,
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token
-        }
-    });
-    let data = await axiosPlaylist.get().catch(err => {});
-    console.log(data);
-    return res.json(data);
-}
