@@ -18,7 +18,7 @@
     "homepage": "https://github.com/josehpena/temperature-playlist#readme",
     "dependencies": {
         "axios": "^0.19.2",
-        "express": "^4.17.1",
+        "express": "^4.17.3",
         "mongoose": "^5.8.11",
         "nodemon": "^2.0.2",
         "query-string": "^6.10.1",
